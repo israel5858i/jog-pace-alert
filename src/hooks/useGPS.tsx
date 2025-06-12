@@ -19,15 +19,33 @@ export const useGPS = () => {
 
   const startTracking = async () => {
     try {
-      // Request permissions
+      console.log('Starting GPS tracking...');
+      
+      // Clear any existing error
+      setError(null);
+      
+      // Request permissions first
+      console.log('Requesting location permissions...');
       const permissions = await Geolocation.requestPermissions();
+      console.log('Permissions result:', permissions);
       
       if (permissions.location !== 'granted') {
-        setError('Location permission denied');
+        setError('Location permission denied. Please enable location access in your device settings.');
         return;
       }
 
+      // Get current position first to test if GPS is working
+      console.log('Getting current position...');
+      const currentPosition = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      });
+      
+      console.log('Current position:', currentPosition);
+      
       // Start watching position
+      console.log('Starting position watch...');
       watchId.current = await Geolocation.watchPosition(
         {
           enableHighAccuracy: true,
@@ -35,14 +53,19 @@ export const useGPS = () => {
           maximumAge: 1000
         },
         (position, err) => {
+          console.log('Position update:', position, 'Error:', err);
+          
           if (err) {
-            setError(err.message);
+            console.error('Position watch error:', err);
+            setError(`GPS error: ${err.message}`);
             return;
           }
           
           if (position) {
             // Convert speed from m/s to km/h
             const speedKmh = position.coords.speed ? (position.coords.speed * 3.6) : 0;
+            
+            console.log('Speed update:', speedKmh, 'km/h');
             
             setGPSData({
               speed: Math.max(0, speedKmh), // Ensure non-negative speed
@@ -53,16 +76,25 @@ export const useGPS = () => {
           }
         }
       );
+      
+      console.log('Watch ID:', watchId.current);
+      
     } catch (err) {
-      setError('Failed to start GPS tracking');
       console.error('GPS Error:', err);
+      setError(`Failed to start GPS tracking: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
   const stopTracking = async () => {
+    console.log('Stopping GPS tracking...');
     if (watchId.current) {
-      await Geolocation.clearWatch({ id: watchId.current });
-      watchId.current = null;
+      try {
+        await Geolocation.clearWatch({ id: watchId.current });
+        watchId.current = null;
+        console.log('GPS tracking stopped');
+      } catch (err) {
+        console.error('Error stopping GPS tracking:', err);
+      }
     }
     setGPSData(prev => ({ ...prev, isTracking: false }));
   };
