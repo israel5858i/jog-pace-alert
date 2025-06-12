@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useGPS } from '../hooks/useGPS';
 import { useAudioAlert } from '../hooks/useAudioAlert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Play, Pause, Settings } from 'lucide-react';
+import { Play, Pause, Settings, Smartphone, Globe } from 'lucide-react';
 
 const Speedometer = () => {
-  const { gpsData, error, startTracking, stopTracking } = useGPS();
+  const { gpsData, error, startTracking, stopTracking, isWebMode } = useGPS();
   const { playBeep } = useAudioAlert();
   const [targetSpeed, setTargetSpeed] = useState(10); // Default 10 km/h
   const [showSettings, setShowSettings] = useState(false);
@@ -48,7 +47,37 @@ const Speedometer = () => {
         <div className="text-center pt-8">
           <h1 className="text-2xl font-bold text-gray-800">GPS Speedometer</h1>
           <p className="text-gray-600">Running Pace Tracker</p>
+          
+          {/* Platform Indicator */}
+          <div className="flex items-center justify-center mt-2 text-sm text-gray-500">
+            {isWebMode ? (
+              <>
+                <Globe className="w-4 h-4 mr-1" />
+                Web Mode (Testing)
+              </>
+            ) : (
+              <>
+                <Smartphone className="w-4 h-4 mr-1" />
+                Mobile Mode
+              </>
+            )}
+          </div>
         </div>
+
+        {/* Web Mode Warning */}
+        {isWebMode && (
+          <Card className="p-4 bg-amber-50 border-amber-200">
+            <div className="text-sm text-amber-800 space-y-2">
+              <div className="font-semibold flex items-center">
+                <Globe className="w-4 h-4 mr-2" />
+                Running in Browser Mode
+              </div>
+              <div className="text-xs">
+                Speed tracking may be limited in web browsers. For accurate GPS tracking with alerts, deploy to a mobile device.
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Main Speed Display */}
         <Card className="p-8 text-center bg-white shadow-xl">
@@ -139,7 +168,7 @@ const Speedometer = () => {
               <li>• Start tracking to monitor your running speed</li>
               <li>• Set your target pace in the settings</li>
               <li>• Get audio + vibration alerts when below target</li>
-              <li>• Works with screen off (keep app open)</li>
+              <li>• {isWebMode ? 'Deploy to mobile for best experience' : 'Works with screen off (keep app open)'}</li>
             </ul>
           </div>
         </Card>
